@@ -17,7 +17,7 @@ README / docstring，桥接类插件的完整协议见 [`tju_info_retrieval/INTE
 Plugin Root 默认位于 Firefly 用户数据目录的 `plugins` 子目录，可用环境变量
 `FIREFLY_PLUGIN_ROOT` 或 `config/path_config.yaml` 的 `paths.plugin_root` 重定向。
 
-## 四插件能力入口一览
+## 五插件能力入口一览
 
 | 插件 | 主要入口 | 详细契约 |
 |---|---|---|
@@ -25,6 +25,32 @@ Plugin Root 默认位于 Firefly 用户数据目录的 `plugins` 子目录，可
 | firefly_camera_vision | `status()` / `start()` / `stop()`：设备可用性声明与能力暴露（永不后台开启摄像头） | 源码模块 docstring |
 | learning_focus | `open()`、`enter_learning(goal)`、`submit_answer(node_id, answer, expected)`、`review_due_items()` | [`learning_focus/README.md`](learning_focus/README.md) |
 | tju_info_retrieval | `search(query, top_k)`、`open_login()`、`open_ui()`、`status()` | [`tju_info_retrieval/INTERFACE.md`](tju_info_retrieval/INTERFACE.md) |
+| firefly_voice | `status()`、`health_check()`、`enable()`、`disable()`、`set_auto_play()`、`test_play()`、`start_service()`、`stop_service()`、`restart_service()` | 见下文 Voice Capability 与 [`firefly_voice/README.md`](firefly_voice/README.md) |
+
+## Voice Capability（firefly_voice）
+
+语音能力插件：把 TTS + RVC 语音链路（宿主侧 `voice_client` → 外部 `voice_module` 服务
+→ edge-TTS → RVC → sounddevice 播放）纳入插件生态的**状态管理层**。
+
+```python
+class VoicePlugin:            # 实现于 firefly_voice/plugin.py（FireflyExtension 基类）
+    def status(self) -> str          # 卡片状态位: "ONLINE" / "OFFLINE"（TCP 探测 127.0.0.1:8300）
+    def health_check(self) -> dict   # 完整健康: online/latency/enabled/auto_play/config source
+    def enable(self) -> dict         # 打开语音能力（写用户插件配置, 免重启即时生效）
+    def disable(self) -> dict        # 关闭语音能力（关闭后零 HTTP 调用）
+    def set_auto_play(self, value: bool) -> dict   # 自动朗读开关（默认 False, v1.3: 仅播放按钮）
+    def test_play(self, text: str = "…") -> dict   # 显式试听（经宿主 voice_client.speak）
+```
+
+**职责边界**：插件只负责**能力管理**（开关 / 状态 / 服务显式生命周期 / 配置落盘）。
+**不负责**：聊天逻辑、LLM 调用、Agent 决策、语音合成与播放实现（链路全部属宿主与外部服务）。
+
+| 约定 | 内容 |
+|---|---|
+| 配置落点 | `%LOCALAPPDATA%/FireflyAI/plugins/firefly_voice/config.yaml`（优先级：环境变量 > 用户插件配置 > 旧 `voice_config.yaml` > 默认值） |
+| 服务生命周期 | **绝不自动启动**；仅经用户显式动作启停；宿主退出不代管服务进程 |
+| 降级 | 服务离线时宿主与聊天零影响（`voice_client` 永不抛异常）；插件显示 OFFLINE |
+| 隐私 | 无用户数据采集；文本只发本机回环端口；不含模型权重/音频/密钥/本机路径 |
 
 ## 桥接类插件
 

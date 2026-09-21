@@ -13,6 +13,7 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 | `firefly_camera_vision/` | 摄像头视觉能力适配器：按需单帧、永不后台开摄像头，设备状态声明卡 | 完整源码 | ✅ 可直接使用 |
 | `learning_focus/` | 学习专注：知识图谱规划 × 学习者画像记忆 × 作答证据评估（算法层纯标准库） | 完整源码 + 测试 | ✅ 可直接使用 |
 | `tju_info_retrieval/` | 天津大学信息检索**薄适配器**（桥接外部私有工程） | 仅接口契约文档 | 📄 文档分发 |
+| `firefly_voice/` | 语音能力管理：TTS+RVC 服务状态/开关/显式启停（Voice Settings 面板） | 完整源码 + 测试 | ✅ 可直接使用 |
 
 ## 安装
 
@@ -53,6 +54,7 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 - `learning_focus/README.md`：架构、能力面、数据布局、测试
 - `tju_info_retrieval/INTERFACE.md`：桥接协议、状态机、环境变量契约、
   桥接类插件的通用设计经验
+- `firefly_voice/README.md`：能力管理接口、配置优先级与迁移、服务启停策略、无 GPU 降级、隐私说明
 
 ## 分发边界说明
 
