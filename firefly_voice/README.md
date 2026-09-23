@@ -18,8 +18,9 @@
 │ 聊天链路（宿主所有，插件不参与）                                │
 │ LLM FINAL ─► VoiceAnnouncer ─► voice_client ─► HTTP :8300    │
 │                                    ▲               │         │
-│                                    │         voice_module     │
-│                                    │         （外部服务进程）   │
+│                                    │         voice service     │
+│                                    │   （独立服务进程，源码在本  │
+│                                    │     仓库 services/ 下）    │
 │                                    │               │         │
 │                                    │          TTS(edge) ► RVC │
 │                                    │               │         │
@@ -75,31 +76,37 @@ voice:
 - 环境变量覆盖：`FIREFLY_VOICE_ENABLED` / `FIREFLY_VOICE_AUTO_PLAY` / `FIREFLY_VOICE_URL`
 - 首次加载自动**一次性迁移**旧配置：url/超时/情绪/截断字段继承；`enabled` 按新默认 `true` 落盘，`auto_play` 保持 `false`
 
-## 5. 服务启动方式
+## 5. 服务部署与启动
 
-语音服务是**独立外部进程**（不在本仓库内），由用户显式启动：
+语音服务是**独立外部进程**，由用户显式启动。服务本体已随本仓库发布：
+[`services/firefly_voice_service/`](../services/firefly_voice_service/README.md)
+（含源码、依赖清单、一键环境脚本与模型部署说明）。
 
-1. **推荐**：Voice Settings 面板 → 「启动语音服务」（使用配置中的 `service.root/python`）
-2. 手动命令行（服务工程目录内）：
-   ```powershell
-   <service.python> api/server.py      # 监听 127.0.0.1:8300
-   ```
-3. 冷启动模型加载约 **20-50 秒**；`GET /health` 返回 200 即就绪
-4. 停止：面板「停止语音服务」（仅终止本插件启动的 PID 或持有 8300 端口的 python 进程）
+1. **部署服务**（一次性）：按
+   [`services/firefly_voice_service/README.md`](../services/firefly_voice_service/README.md)
+   执行 `setup.ps1` 并放置模型权重（模型因 License 边界**不在仓库内**，见其 `models/README.md`）
+2. 在 §4 的用户配置中填 `service.root` / `service.python` 指向服务目录与 `.venv`
+3. **日常启动**：Voice Settings 面板 → 「启动语音服务」；或服务目录内 `start.ps1`
+4. 冷启动模型加载约 **20-50 秒**；`GET /health` 返回 200 即就绪
+5. 停止：面板「停止语音服务」（仅终止本插件启动的 PID 或持有 8300 端口的 python 进程）
 
 **资源控制策略**：服务不随宿主启动、宿主退出不代管服务生命周期。
 
-## 6. 无 GPU 降级说明
+## 6. 无 GPU / AMD 显卡说明
 
-- 服务端推理设备由服务工程配置决定（`engine.device: auto`——有 GPU 用 CUDA fp16，否则 CPU fp32）
-- CPU 模式可用但合成明显变慢；服务未就绪/未启动时，**宿主与聊天零影响**：
+- 服务端推理设备由引擎自动选择（`engine.device: auto`）：
+  **CUDA (fp16) → DirectML (AMD, fp32) → CPU (fp32)**
+- **AMD 显卡**（如 RX 7600S）：服务 venv 内安装 `torch-directml` 即自动走 GPU，无需改代码
+- CPU 模式可完成全部功能但合成明显变慢；服务未就绪/未启动时，**宿主与聊天零影响**：
   - 插件状态显示 OFFLINE；`test_play` 与播放按钮返回明确的失败原因（`disabled` / `unavailable`）
   - 聊天链路永不阻塞、永不报错（voice_client「永不抛异常」设计）
 - 无外部服务时仍可用：能力开关、状态查看、全部非语音功能
 
-## 7. 隐私说明
+## 7. 隐私与版权边界
 
 - **本插件不采集、不存储、不传输任何用户数据**：只读写本地配置文件与本地回环端口
 - 语音文本仅发往 `127.0.0.1:8300`（本机服务）；TTS 合成由服务侧调用在线 TTS 引擎完成，**RVC 声线转换与音频播放全部在本机**
 - 服务路径等机器相关信息只存在于用户数据目录，**不进版本控制、不进插件仓**
 - 本插件不含任何模型权重、音频输出或用户配置；插件源码不含 API 密钥与本机绝对路径
+- 语音模型 **不在本仓库分发**（流萤模型 AGPL-3.0 + 训练数据含游戏语音，仅限个人研究）；
+  部署与替换自有音色见 `services/firefly_voice_service/models/README.md`
