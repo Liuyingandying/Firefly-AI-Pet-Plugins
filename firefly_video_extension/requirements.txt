@@ -1,0 +1,4 @@
+# firefly_video_extension 部署依赖（本地视频分析 canonical 路径）。
+# 宿主仓库 requirements.txt 已含 rapidocr>=3.9,<4 与 onnxruntime——本文件只补
+# 宿主未强装的两组可选引擎：
+pip install 说明见 scripts/check_environment.py 的输出提示。

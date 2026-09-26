@@ -1,0 +1,1 @@
+"""TJU Info Retrieval Firefly plugin package."""

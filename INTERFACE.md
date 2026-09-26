@@ -17,15 +17,22 @@ README / docstring，桥接类插件的完整协议见 [`tju_info_retrieval/INTE
 Plugin Root 默认位于 Firefly 用户数据目录的 `plugins` 子目录，可用环境变量
 `FIREFLY_PLUGIN_ROOT` 或 `config/path_config.yaml` 的 `paths.plugin_root` 重定向。
 
-## 五插件能力入口一览
+## PluginLoader 管理插件（五个，均有 `create_plugin` 工厂）
 
-| 插件 | 主要入口 | 详细契约 |
+| 插件（manifest id） | 主要入口 | 详细契约 |
 |---|---|---|
-| firefly_video_extension | `open()`：选择本地视频，输出时长 / 场景 / 关键帧 / 字幕摘要（复用宿主视频管线） | 源码模块 docstring |
-| firefly_camera_vision | `status()` / `start()` / `stop()`：设备可用性声明与能力暴露（永不后台开启摄像头） | 源码模块 docstring |
-| learning_focus | `open()`、`enter_learning(goal)`、`submit_answer(node_id, answer, expected)`、`review_due_items()` | [`learning_focus/README.md`](learning_focus/README.md) |
+| firefly_video_extension | `open()`：选择本地视频，输出时长 / 音频 / ASR 字幕 / 场景 / 关键帧 / OCR（复用宿主视频管线，不调视觉大模型） | [`firefly_video_extension/README.md`](firefly_video_extension/README.md) |
+| firefly_camera_vision | `status()` / `start()` / `stop()`：设备可用性声明与能力暴露（永不后台开启摄像头；真实拍照与视觉理解归宿主） | [`firefly_camera_vision/README.md`](firefly_camera_vision/README.md) |
+| learning_focus | `open()`、`enter_learning(goal)`、`submit_answer(node_id, answer, expected)`、`review_due_items()`（**WIP**） | [`learning_focus/README.md`](learning_focus/README.md) |
 | tju_info_retrieval | `search(query, top_k)`、`open_login()`、`open_ui()`、`status()` | [`tju_info_retrieval/INTERFACE.md`](tju_info_retrieval/INTERFACE.md) |
 | firefly_voice | `status()`、`health_check()`、`enable()`、`disable()`、`set_auto_play()`、`test_play()`、`start_service()`、`stop_service()`、`restart_service()` | 见下文 Voice Capability 与 [`firefly_voice/README.md`](firefly_voice/README.md) |
+
+## 外部 / 服务型组件（**不是 `create_plugin` 插件**，不进入插件运行时根）
+
+| 组件 | 形态 | 接入面 |
+|---|---|---|
+| `firefly_bili_insight_service/` | GPL-3.0 JSONL 子进程服务（stdin/stdout，一次调用一进程） | 宿主 `core/bili_insight_client`；`FIREFLY_BILI_INSIGHT_ROOT` 指向该目录 |
+| `firefly_voice/voice_module/` | HTTP 本机回环服务（FastAPI 127.0.0.1:8300） | 宿主 `voice_client`；由 `firefly_voice` 插件管理启停 |
 
 ## Voice Capability（firefly_voice）
 

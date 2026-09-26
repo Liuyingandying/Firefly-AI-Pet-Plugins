@@ -1,21 +1,22 @@
 # Firefly AI Pet — Plugin Extension Package
 
-Firefly AI Pet 的插件扩展包（比赛提交 / 开源展示用）。四个插件全部符合
+Firefly AI Pet 的插件扩展包（比赛提交 / 开源展示用）。PluginLoader 管理的插件符合
 FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_plugin(parent=None)`
 工厂，由宿主 `core/plugin_loader.py` 在启动时自动发现加载，manifest 内嵌于
-`QuickToolManifest`（无需 plugin.json）。
+`QuickToolManifest`（无需 plugin.json）。本包另含两类**非 plugin.py 组件**：
+服务型能力（BiliInsight Service）与契约文档（见下表「形态」列，按真实架构如实标注）。
 
-## 包内容
+## 包内容与真实状态（2026-09-26 实测）
 
-| 目录 | 功能 | 分发形式 | 状态 |
+| 目录 | 功能 | 形态 | 状态 |
 |---|---|---|---|
-| `firefly_video_extension/` | 本地视频文件分析：时长 / 场景检测 / 关键帧 / 字幕（调用宿主 VideoProcessor） | 完整源码 | ✅ 可直接使用 |
-| `firefly_bili_insight_service/` | **B站 URL / BV号 视频阅读服务**：`metadata` / `transcribe`（本地 faster-whisper ASR）/ `frame` 抽帧，subprocess JSONL，供宿主 `BiliInsightClient` 调用 | 完整源码（GPL-3.0，见下文 License） | 🔧 需按其 README 部署 |
-| `firefly_camera_vision/` | 摄像头视觉能力适配器：按需单帧、永不后台开摄像头，设备状态声明卡 | 完整源码 | ✅ 可直接使用 |
-| `learning_focus/` | 学习专注：知识图谱规划 × 学习者画像记忆 × 作答证据评估（算法层纯标准库） | 完整源码 + 测试 | ✅ 可直接使用 |
-| `tju_info_retrieval/` | 天津大学信息检索**薄适配器**（桥接外部私有工程） | 仅接口契约文档 | 📄 文档分发 |
-| `firefly_voice/` | **插件控制层**：TTS+RVC 服务状态/开关/显式启停（Voice Settings 面板） | 完整源码 + 测试 | ✅ 可直接使用 |
-| `firefly_voice/voice_module/` | **真实 TTS + RVC 服务端**（`firefly_voice` 插件管理的外部服务进程）：edge-TTS → RVC 声线转换 → 本机播放，FastAPI 127.0.0.1:8300 | 完整源码 + vendor 引擎快照(MIT) + 启动/诊断脚本 + 测试；**模型权重不入库**（License 边界，见其 models/README.md） | 🔧 需按其 README 部署 |
+| `firefly_video_extension/` | 本地视频文件分析：时长 / 音频 / ASR 字幕 / 场景 / 关键帧 / OCR（调用宿主 VideoProcessor，不调视觉大模型） | plugin.py 插件 | ✅ COMPLETE（真实 MP4 六要素实测） |
+| `firefly_bili_insight_service/` | **B站 URL / BV号 视频阅读服务**：`metadata` / `transcribe`（本地 faster-whisper ASR）/ `frame` 抽帧，subprocess JSONL，供宿主 `BiliInsightClient` 调用 | **服务型能力（非 plugin.py 插件）**，GPL-3.0 | ✅ COMPLETE（匿名四 action 实测） |
+| `firefly_camera_vision/` | 相机视觉**能力适配器**：设备可用性 + 门控；真实拍照与视觉理解在宿主 `CameraCapture → ScreenVisionService` | plugin.py 适配器 | ✅ COMPLETE（真实相机→真实视觉回答实测；回答依赖 Vision Provider 凭据） |
+| `tju_info_retrieval/` | 天津大学信息检索**薄适配器**：桥接外部工程 [tju-research-assistant](https://github.com/Liuyingandying/tju-research-assistant)（公开），检索/登录态全在桥接侧 | plugin.py 插件 + 契约文档 | ✅ COMPLETE（装载/健康/登录流/open_ui 实测；真实检索需有效校园登录） |
+| `firefly_voice/` | **插件控制层**：TTS+RVC 服务状态/开关/显式启停（Voice Settings 面板） | plugin.py 插件 | ✅ COMPLETE |
+| `firefly_voice/voice_module/` | **真实 TTS + RVC 服务端**：edge-TTS → RVC 声线转换 → 本机播放，FastAPI 127.0.0.1:8300 | 服务型能力 | 🔧 需按其 README 部署（模型权重外置） |
+| `learning_focus/` | 学习专注：知识图谱规划 × 学习者画像记忆 × 作答证据评估 | plugin.py 插件 | 🚧 **WIP**（开发中，状态以宿主主干为准） |
 
 > **语音能力 = 控制层 + 服务端两部分，源码均已包含**。`firefly_voice/` 插件负责状态/开关/启停管理；
 > 真正出声的是 [`firefly_voice/voice_module/`](firefly_voice/voice_module/README.md) 服务端——
@@ -31,22 +32,32 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 
 ## 安装
 
-将插件目录放入 Firefly 的插件根目录即可（默认 `%LOCALAPPDATA%/FireflyAI/plugins`；
-可用 `FIREFLY_PLUGIN_ROOT` 环境变量或 `config/path_config.yaml` 的 `paths.plugin_root` 指定）。
+分两层，**不要混**：
 
-### 安装流程（普通用户）
+### A. Quick Tools 插件（复制到插件运行时根）
+
+`firefly_video_extension/`、`firefly_camera_vision/`、`tju_info_retrieval/`、
+`firefly_voice/`、`learning_focus/`（WIP，可选）——复制到
+`%LOCALAPPDATA%\FireflyAI\plugins\`（可用 `FIREFLY_PLUGIN_ROOT` 环境变量或宿主
+`config/path_config.yaml` 的 `paths.plugin_root` 重定向），重启宿主自动发现。
+
+### B. 服务型能力（**不能**当插件目录复制，按各自 README 部署）
+
+- `firefly_voice/voice_module/`：语音服务端（源码完整；模型权重按其 models/README 下载）。
+- `firefly_bili_insight_service/`：B站视频阅读服务——克隆仓库后建 venv 装依赖、
+  克隆上游 BiliInsight，再把宿主 `FIREFLY_BILI_INSIGHT_ROOT` 指向
+  `<Firefly-AI-Pet-Plugins>/firefly_bili_insight_service`。
+  **不要**把该目录复制进 plugins 运行时根——它没有 `create_plugin`，宿主不会也不应装载它。
+
+### 普通用户安装步骤
 
 1. **下载插件包**：本仓库页面 → `Releases`（v1.0.0 起，含介绍 PDF）或
-   `Code → Download ZIP`；建议使用 tag 归档（如
-   `archive/refs/tags/v1.0.0.zip`），与发布状态零偏差。
-2. **复制插件目录**：解压后将 `firefly_video_extension/`、`firefly_camera_vision/`、
-   `learning_focus/` 三个目录复制到插件根目录
-   `%LOCALAPPDATA%\FireflyAI\plugins\`——该目录不存在时宿主会在首次启动时自动创建
-   （已在 v1.0-rc2 新用户安装验证中实测）。
+   `Code → Download ZIP`；建议使用 tag 归档，与发布状态零偏差。
+2. **复制插件目录**：解压后将上表 A 类目录复制到插件根目录——该目录不存在时宿主会在
+   首次启动时自动创建（已在 v1.0-rc2 新用户安装验证中实测）。
 3. **重启宿主**：托盘右键退出 Firefly AI Pet 后重新启动，插件在启动时被自动发现加载。
 4. **确认加载**：在宠物快捷工具 / 设置面板中查看对应插件入口。
-5. **tju_info_retrieval**：为接口契约文档分发，需按 `tju_info_retrieval/INTERFACE.md`
-   配合外部工程使用，普通用户可跳过。
+5. **可选服务**：需要语音合成或 B站视频阅读时，再按 B 类各自 README 部署。
 
 > 卸载：删除插件根目录下对应的插件目录并重启宿主即可；宿主对插件故障相互隔离，
 > 移除单个插件不影响其余功能。
@@ -64,10 +75,14 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 
 详细功能、架构与设计要点见各插件目录内 README / 文档：
 
-- `firefly_video_extension/README.md`：本地视频分析与 B站 URL 阅读两条链的区别
+- `firefly_video_extension/README.md`：本地视频与 B站 URL 两条链的区别、部署依赖、
+  环境自检与真实冒烟脚本
 - `firefly_bili_insight_service/README.md`：B站服务的安装（Python/ffmpeg/上游克隆）、
   Firefly 指向配置、登录态安全边界、冒烟测试
-- `firefly_camera_vision/`：见源码模块 docstring
+- `firefly_camera_vision/README.md`：适配器语义（真实实现在宿主）、隐私不变量、设备自检
+- `tju_info_retrieval/README.md`：外部工程配置、使用触发词、凭据边界；
+  `INTERFACE.md` 契约全文；`docs/TJU_BRIDGE_CONTRACT.md` bridge 命令级协议；
+  `tests/` 纯单元自测
 - `learning_focus/README.md`：架构、能力面、数据布局、测试
 - `tju_info_retrieval/INTERFACE.md`：桥接协议、状态机、环境变量契约、
   桥接类插件的通用设计经验
@@ -80,10 +95,11 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 - 本包**不含**任何 API 密钥、token、cookie、用户数据或本机绝对路径。
 - 本包**不含任何模型权重**：语音服务的说话人模型与基础模型（HuBERT/rmvpe）因授权边界
   由用户按 `firefly_voice/voice_module/models/README.md` 自行下载（含 SHA256 校验值）；
-  B站服务的 Whisper 模型首次运行时自动下载（见其 README）。
-- `tju_info_retrieval` 的核心检索工程为私有项目，本包仅公开宿主侧适配契约；
-  复现该插件需要按 `INTERFACE.md` 实现同构的 bridge CLI。
-- TJU 登录态（cookies/storage state）归属外部工程，本包不含、也不读取其内容。
+  B站服务的 Whisper 模型、OCR 模型首次运行时自动下载（见各自 README）。
+- TJU 检索核心工程已公开：[tju-research-assistant](https://github.com/Liuyingandying/tju-research-assistant)，
+  插件适配器通过 `TJU_INFO_RETRIEVAL_ROOT` 指向其克隆即可使用；
+  TJU 登录态（cookies/storage state/Edge profile）归属该工程与用户本人，
+  本包不含、不读取、永不入库。
 
 ## License
 

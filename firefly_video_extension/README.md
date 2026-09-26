@@ -28,3 +28,35 @@ Firefly 的视频能力有**两条互不相同的执行链**：
   [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md)）
 - 环境变量 `FIREFLY_BILI_INSIGHT_ROOT` 指向
   `<Firefly-AI-Pet-Plugins>/firefly_bili_insight_service` 即可让 Firefly 使用
+
+
+## 安装与部署（本地视频分析）
+
+插件本体随宿主即用；**引擎依赖**决定六项能力是否全绿：
+
+```bash
+# 1) FFmpeg / ffprobe（系统依赖，必须在 PATH）
+winget install ffmpeg          # 或 https://www.gyan.dev/ffmpeg/builds/
+ffmpeg -version && ffprobe -version
+
+# 2) 引擎依赖（宿主 requirements 已含 rapidocr>=3.9,<4；缺哪项装哪项）
+pip install faster-whisper scenedetect
+```
+
+一键自检与真实冒烟（测试视频自备，**不要提交到仓库**）：
+
+```bash
+python scripts/check_environment.py               # 逐项 PASS/FAIL + 安装提示
+python scripts/smoke_test.py --video <你的.mp4>    # DURATION/AUDIO/ASR/SCENE/KEYFRAME/OCR
+```
+
+| 依赖 | 提供的能力 | 缺失时 |
+|---|---|---|
+| FFmpeg / ffprobe | 时长、音频提取、关键帧、抽帧 | 管线不可用 |
+| faster-whisper | 本地 ASR 字幕 | 字幕段为空（降级） |
+| PySceneDetect | 场景检测 | 跳过场景分段（降级） |
+| rapidocr + onnxruntime | 关键帧 OCR | OCR 为空（降级） |
+
+能力边界：本插件**不调用视觉大模型**——「AI 理解视频画面」由宿主视觉链路
+（B站 URL 阅读见 [`../firefly_bili_insight_service/`](../firefly_bili_insight_service/README.md)）
+提供，不在此插件的承诺范围内。

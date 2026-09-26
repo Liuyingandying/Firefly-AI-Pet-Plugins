@@ -1,8 +1,11 @@
 # TJU Info Retrieval — Firefly 插件接口契约
 
 > 本插件为**薄适配器**：Firefly 不直接实现检索，而是通过一次性子进程桥接
-> 一个独立的桌面检索工程（Source of Truth）。该核心工程为私有项目，
-> 不随本开源包分发；本文档公开其宿主侧的完整接入契约，供复现同构桥接。
+> 一个独立的桌面检索工程（Source of Truth）。该核心工程已公开：
+> [Liuyingandying/tju-research-assistant](https://github.com/Liuyingandying/tju-research-assistant)；
+> 插件的完整适配器源码（`adapter.py` / `plugin.py` / `tests/`）随本目录分发，
+> 安装与配置见 [README.md](README.md)，bridge 命令级协议见
+> [docs/TJU_BRIDGE_CONTRACT.md](docs/TJU_BRIDGE_CONTRACT.md)。
 
 ## 架构
 
@@ -104,6 +107,7 @@ class RetrievalResult:
 
 ## 免责声明
 
-- 核心检索工程（TJU_Info_Retrieval）为私有项目，未随本包分发。
+- 检索核心工程（tju-research-assistant）独立分发于
+  https://github.com/Liuyingandying/tju-research-assistant ，许可与登录态归属该工程。
 - `search` 面向 CNKI 等校内资源，需要持有对应机构的有效登录授权；
   本插件不包含也不会代管任何账号凭据。
