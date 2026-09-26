@@ -9,7 +9,8 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 
 | 目录 | 功能 | 分发形式 | 状态 |
 |---|---|---|---|
-| `firefly_video_extension/` | 本地视频文件分析：时长 / 场景检测 / 关键帧 / 字幕（调用宿主 VideoProcessor）。**B站 URL 视频阅读是另一条链**，由独立 GPL 服务仓 [Firefly-BiliInsight-Service](https://github.com/Liuyingandying/Firefly-BiliInsight-Service) 提供，见 [firefly_video_extension/README.md](firefly_video_extension/README.md) | 完整源码 | ✅ 可直接使用 |
+| `firefly_video_extension/` | 本地视频文件分析：时长 / 场景检测 / 关键帧 / 字幕（调用宿主 VideoProcessor） | 完整源码 | ✅ 可直接使用 |
+| `firefly_bili_insight_service/` | **B站 URL / BV号 视频阅读服务**：`metadata` / `transcribe`（本地 faster-whisper ASR）/ `frame` 抽帧，subprocess JSONL，供宿主 `BiliInsightClient` 调用 | 完整源码（GPL-3.0，见下文 License） | 🔧 需按其 README 部署 |
 | `firefly_camera_vision/` | 摄像头视觉能力适配器：按需单帧、永不后台开摄像头，设备状态声明卡 | 完整源码 | ✅ 可直接使用 |
 | `learning_focus/` | 学习专注：知识图谱规划 × 学习者画像记忆 × 作答证据评估（算法层纯标准库） | 完整源码 + 测试 | ✅ 可直接使用 |
 | `tju_info_retrieval/` | 天津大学信息检索**薄适配器**（桥接外部私有工程） | 仅接口契约文档 | 📄 文档分发 |
@@ -19,6 +20,14 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 > **语音能力 = 控制层 + 服务端两部分，源码均已包含**。`firefly_voice/` 插件负责状态/开关/启停管理；
 > 真正出声的是 [`firefly_voice/voice_module/`](firefly_voice/voice_module/README.md) 服务端——
 > 克隆后按其 README 安装依赖并下载模型权重即可（模型因许可证原因外置，源码零缺失）。未部署时聊天链路零影响。
+>
+> **视频能力同样 = 两部分**：[`firefly_video_extension/`](firefly_video_extension/README.md)
+> 管**本地视频文件**（FFmpeg / 场景 / 关键帧 / OCR，随宿主即用）；
+> [`firefly_bili_insight_service/`](firefly_bili_insight_service/README.md) 管
+> **B站 URL / BV号**（metadata / transcribe / frame）。两条链互不相同。
+> B站服务**不需要安装 B站桌面客户端**；**登录 OPTIONAL**——公开视频匿名即可
+> `metadata` / `transcribe` / `frame` 全通过（2026-09-26 实测），`transcribe` 是
+> **本地 faster-whisper ASR**，不是 B站官方字幕。
 
 ## 安装
 
@@ -55,8 +64,9 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 
 详细功能、架构与设计要点见各插件目录内 README / 文档：
 
-- `firefly_video_extension/README.md`：本地视频分析与 B站 URL 阅读两条链的区别、
-  B站服务的安装与登录边界
+- `firefly_video_extension/README.md`：本地视频分析与 B站 URL 阅读两条链的区别
+- `firefly_bili_insight_service/README.md`：B站服务的安装（Python/ffmpeg/上游克隆）、
+  Firefly 指向配置、登录态安全边界、冒烟测试
 - `firefly_camera_vision/`：见源码模块 docstring
 - `learning_focus/README.md`：架构、能力面、数据布局、测试
 - `tju_info_retrieval/INTERFACE.md`：桥接协议、状态机、环境变量契约、
@@ -69,7 +79,20 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 
 - 本包**不含**任何 API 密钥、token、cookie、用户数据或本机绝对路径。
 - 本包**不含任何模型权重**：语音服务的说话人模型与基础模型（HuBERT/rmvpe）因授权边界
-  由用户按 `firefly_voice/voice_module/models/README.md` 自行下载（含 SHA256 校验值）。
+  由用户按 `firefly_voice/voice_module/models/README.md` 自行下载（含 SHA256 校验值）；
+  B站服务的 Whisper 模型首次运行时自动下载（见其 README）。
 - `tju_info_retrieval` 的核心检索工程为私有项目，本包仅公开宿主侧适配契约；
   复现该插件需要按 `INTERFACE.md` 实现同构的 bridge CLI。
 - TJU 登录态（cookies/storage state）归属外部工程，本包不含、也不读取其内容。
+
+## License
+
+本仓库为 **multi-license repository**：
+
+- 各插件目录（`firefly_video_extension/`、`firefly_camera_vision/`、`learning_focus/`、
+  `firefly_voice/` 等）按仓库根 [`LICENSE`](LICENSE)（**MIT**）分发；
+- **例外**：[`firefly_bili_insight_service/`](firefly_bili_insight_service/) 为
+  **GPL-3.0-or-later**（见该目录内 [`LICENSE`](firefly_bili_insight_service/LICENSE)）。
+  该目录及其衍生代码**不受根 MIT LICENSE 覆盖**；它与宿主经 subprocess JSONL 解耦，
+  与上游 GPL 依赖保持同谱系；
+- 上游依赖与完整第三方许可清单见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
