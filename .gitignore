@@ -33,3 +33,6 @@ outputs/
 
 # ---- pid files from start_voice.ps1 ----
 .voice_service.pid
+
+# pytest basetemp / 本地测试临时目录
+.tmp_*/
