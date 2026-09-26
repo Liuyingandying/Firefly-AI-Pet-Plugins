@@ -45,6 +45,19 @@ class VoicePlugin:            # 实现于 firefly_voice/plugin.py（FireflyExten
 **职责边界**：插件只负责**能力管理**（开关 / 状态 / 服务显式生命周期 / 配置落盘）。
 **不负责**：聊天逻辑、LLM 调用、Agent 决策、语音合成与播放实现（链路全部属宿主与外部服务）。
 
+### Voice Module（服务端本体）
+
+真实 TTS + RVC 服务端源码位于本仓库
+[`firefly_voice/voice_module/`](firefly_voice/voice_module/README.md)
+（edge-tts → RVC → sounddevice，完整源码 + vendor 引擎快照；模型权重因许可证外置）。
+
+| 约定 | 内容 |
+|---|---|
+| 进程形态 | **HTTP external local service**：独立于宿主的本地进程（FastAPI + uvicorn） |
+| API 边界 | **127.0.0.1:8300**（仅本机回环）：`GET /health`、`POST /voice/speak`、`POST /voice/queue/stop`、`GET /voice/queue` |
+| 解耦原则 | 插件/服务端**不 import 宿主 `app.py`**，宿主也不 import 服务端——两侧只经 HTTP + 用户配置解耦；`voice_client`（宿主）与 `voice_module`（服务端）是唯一对接面 |
+| 源码唯一性 | 服务端源码只在本仓库这一份；宿主仓库不再内嵌第二份，避免漂移 |
+
 | 约定 | 内容 |
 |---|---|
 | 配置落点 | `%LOCALAPPDATA%/FireflyAI/plugins/firefly_voice/config.yaml`（优先级：环境变量 > 用户插件配置 > 旧 `voice_config.yaml` > 默认值） |

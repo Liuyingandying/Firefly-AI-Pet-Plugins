@@ -1,0 +1,35 @@
+# ---- model binaries: NEVER commit (license gate, see firefly_voice/voice_module/models/README.md) ----
+*.pth
+*.pt
+*.onnx
+*.index
+*.bin
+*.ckpt
+*.safetensors
+
+# ---- caches / build artifacts ----
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# ---- environments ----
+venv/
+.venv/
+env/
+
+# ---- logs / temp / generated audio ----
+logs/
+*.log
+tmp/
+output/
+outputs/
+# generated/demo audio anywhere (no tracked wav fixtures exist in this repo;
+# if you add a real fixture, force-add it explicitly: git add -f path/to/fixture.wav)
+*.wav
+*.mp3
+
+# ---- pid files from start_voice.ps1 ----
+.voice_service.pid
