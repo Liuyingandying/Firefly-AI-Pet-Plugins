@@ -9,7 +9,7 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 
 | 目录 | 功能 | 分发形式 | 状态 |
 |---|---|---|---|
-| `firefly_video_extension/` | 本地视频分析：时长 / 场景检测 / 关键帧 / 字幕（调用宿主 VideoProcessor，Phase 2-A 不启用视觉模型） | 完整源码 | ✅ 可直接使用 |
+| `firefly_video_extension/` | 本地视频文件分析：时长 / 场景检测 / 关键帧 / 字幕（调用宿主 VideoProcessor）。**B站 URL 视频阅读是另一条链**，由独立 GPL 服务仓 [Firefly-BiliInsight-Service](https://github.com/Liuyingandying/Firefly-BiliInsight-Service) 提供，见 [firefly_video_extension/README.md](firefly_video_extension/README.md) | 完整源码 | ✅ 可直接使用 |
 | `firefly_camera_vision/` | 摄像头视觉能力适配器：按需单帧、永不后台开摄像头，设备状态声明卡 | 完整源码 | ✅ 可直接使用 |
 | `learning_focus/` | 学习专注：知识图谱规划 × 学习者画像记忆 × 作答证据评估（算法层纯标准库） | 完整源码 + 测试 | ✅ 可直接使用 |
 | `tju_info_retrieval/` | 天津大学信息检索**薄适配器**（桥接外部私有工程） | 仅接口契约文档 | 📄 文档分发 |
@@ -55,7 +55,9 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 
 详细功能、架构与设计要点见各插件目录内 README / 文档：
 
-- `firefly_video_extension/`、`firefly_camera_vision/`：见源码模块 docstring
+- `firefly_video_extension/README.md`：本地视频分析与 B站 URL 阅读两条链的区别、
+  B站服务的安装与登录边界
+- `firefly_camera_vision/`：见源码模块 docstring
 - `learning_focus/README.md`：架构、能力面、数据布局、测试
 - `tju_info_retrieval/INTERFACE.md`：桥接协议、状态机、环境变量契约、
   桥接类插件的通用设计经验
