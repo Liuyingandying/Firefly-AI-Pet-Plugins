@@ -20,7 +20,7 @@
 │                                    ▲               │         │
 │                                    │         voice service     │
 │                                    │   （独立服务进程，源码在本  │
-│                                    │     仓库 services/ 下）    │
+│                                    │  仓库 firefly_voice/voice_module/ 下）│
 │                                    │               │         │
 │                                    │          TTS(edge) ► RVC │
 │                                    │               │         │
@@ -78,17 +78,17 @@ voice:
 
 ## 5. 服务部署与启动
 
-语音服务是**独立外部进程**，由用户显式启动。服务本体已随本仓库发布：
-[`services/firefly_voice_service/`](../services/firefly_voice_service/README.md)
-（含源码、依赖清单、一键环境脚本与模型部署说明）。
+语音服务是**独立外部进程**，由用户显式启动。服务端源码已随本仓库发布：
+[`firefly_voice/voice_module/`](./voice_module/README.md)
+（含完整源码、精确 pin 依赖清单、启动/诊断脚本与模型部署说明）。
 
 1. **部署服务**（一次性）：按
-   [`services/firefly_voice_service/README.md`](../services/firefly_voice_service/README.md)
-   执行 `setup.ps1` 并放置模型权重（模型因 License 边界**不在仓库内**，见其 `models/README.md`）
-2. 在 §4 的用户配置中填 `service.root` / `service.python` 指向服务目录与 `.venv`
-3. **日常启动**：Voice Settings 面板 → 「启动语音服务」；或服务目录内 `start.ps1`
-4. 冷启动模型加载约 **20-50 秒**；`GET /health` 返回 200 即就绪
-5. 停止：面板「停止语音服务」（仅终止本插件启动的 PID 或持有 8300 端口的 python 进程）
+   [`firefly_voice/voice_module/README.md`](./voice_module/README.md)
+   两步安装依赖并放置模型权重（模型因 License 边界**不在仓库内**，见其 `models/README.md`）
+2. 在 §4 的用户配置中填 `service.root` / `service.python` 指向 voice_module 目录与其 venv
+3. **日常启动**：Voice Settings 面板 → 「启动语音服务」；或 voice_module 目录内 `start_voice.ps1`
+4. 冷启动模型加载约 **7-50 秒**；`GET /health` 返回 200 即就绪
+5. 停止：面板「停止语音服务」或 `stop_voice.ps1`（仅终止本插件启动的 PID 或持有 8300 端口的 python 进程）
 
 **资源控制策略**：服务不随宿主启动、宿主退出不代管服务生命周期。
 
@@ -109,4 +109,4 @@ voice:
 - 服务路径等机器相关信息只存在于用户数据目录，**不进版本控制、不进插件仓**
 - 本插件不含任何模型权重、音频输出或用户配置；插件源码不含 API 密钥与本机绝对路径
 - 语音模型 **不在本仓库分发**（流萤模型 AGPL-3.0 + 训练数据含游戏语音，仅限个人研究）；
-  部署与替换自有音色见 `services/firefly_voice_service/models/README.md`
+  部署与替换自有音色见 `voice_module/models/README.md`

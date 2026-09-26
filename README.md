@@ -13,12 +13,12 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 | `firefly_camera_vision/` | 摄像头视觉能力适配器：按需单帧、永不后台开摄像头，设备状态声明卡 | 完整源码 | ✅ 可直接使用 |
 | `learning_focus/` | 学习专注：知识图谱规划 × 学习者画像记忆 × 作答证据评估（算法层纯标准库） | 完整源码 + 测试 | ✅ 可直接使用 |
 | `tju_info_retrieval/` | 天津大学信息检索**薄适配器**（桥接外部私有工程） | 仅接口契约文档 | 📄 文档分发 |
-| `firefly_voice/` | 语音能力管理：TTS+RVC 服务状态/开关/显式启停（Voice Settings 面板） | 完整源码 + 测试 | ✅ 可直接使用 |
-| `services/firefly_voice_service/` | **语音服务本体**（`firefly_voice` 的外部服务进程）：edge-TTS → RVC 声线转换 → 本机播放，FastAPI 127.0.0.1:8300 | 完整源码 + vendor 引擎快照(MIT) + 测试；**模型权重不入库**（License 边界） | 🔧 需按其 README 部署 |
+| `firefly_voice/` | **插件控制层**：TTS+RVC 服务状态/开关/显式启停（Voice Settings 面板） | 完整源码 + 测试 | ✅ 可直接使用 |
+| `firefly_voice/voice_module/` | **真实 TTS + RVC 服务端**（`firefly_voice` 插件管理的外部服务进程）：edge-TTS → RVC 声线转换 → 本机播放，FastAPI 127.0.0.1:8300 | 完整源码 + vendor 引擎快照(MIT) + 启动/诊断脚本 + 测试；**模型权重不入库**（License 边界，见其 models/README.md） | 🔧 需按其 README 部署 |
 
-> **语音能力 = 插件 + 服务两部分**。`firefly_voice/` 插件复制进插件根即可用（状态/开关/启停管理）；
-> 但要真正出声，需按 [`services/firefly_voice_service/README.md`](services/firefly_voice_service/README.md)
-> 部署语音服务（一键环境脚本 + 自行下载模型权重）。未部署时聊天链路零影响。
+> **语音能力 = 控制层 + 服务端两部分，源码均已包含**。`firefly_voice/` 插件负责状态/开关/启停管理；
+> 真正出声的是 [`firefly_voice/voice_module/`](firefly_voice/voice_module/README.md) 服务端——
+> 克隆后按其 README 安装依赖并下载模型权重即可（模型因许可证原因外置，源码零缺失）。未部署时聊天链路零影响。
 
 ## 安装
 
@@ -60,14 +60,14 @@ FireflyExtension v2 契约：Python 包（`__init__.py`）+ `plugin.py::create_p
 - `tju_info_retrieval/INTERFACE.md`：桥接协议、状态机、环境变量契约、
   桥接类插件的通用设计经验
 - `firefly_voice/README.md`：能力管理接口、配置优先级与迁移、服务启停策略、无 GPU 降级、隐私说明
-- `services/firefly_voice_service/README.md`：语音服务架构、Quick Start、模型部署与 License 边界、
-  API 契约、CPU/GPU(DirectML) 说明、Troubleshooting
+- `firefly_voice/voice_module/README.md`：语音服务架构、安装、模型部署与 License 边界、
+  启动/验证命令、Firefly 宿主对接、内存/CUDA Troubleshooting
 
 ## 分发边界说明
 
 - 本包**不含**任何 API 密钥、token、cookie、用户数据或本机绝对路径。
 - 本包**不含任何模型权重**：语音服务的说话人模型与基础模型（HuBERT/rmvpe）因授权边界
-  由用户按 `services/firefly_voice_service/models/README.md` 自行下载（含 SHA256 校验值）。
+  由用户按 `firefly_voice/voice_module/models/README.md` 自行下载（含 SHA256 校验值）。
 - `tju_info_retrieval` 的核心检索工程为私有项目，本包仅公开宿主侧适配契约；
   复现该插件需要按 `INTERFACE.md` 实现同构的 bridge CLI。
 - TJU 登录态（cookies/storage state）归属外部工程，本包不含、也不读取其内容。

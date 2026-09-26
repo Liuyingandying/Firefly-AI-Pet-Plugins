@@ -1,0 +1,17 @@
+/build/
+/build-*/
+/dist/
+/logs/
+/tools/vst3-validator-build/
+*.aps
+*.db
+*.exp
+*.ilk
+*.lib
+*.obj
+*.pdb
+*.sln
+*.suo
+*.user
+*.vcxproj
+*.vcxproj.filters
